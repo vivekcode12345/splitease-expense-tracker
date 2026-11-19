@@ -40,20 +40,8 @@ CREATE TABLE expense_splits (
   CONSTRAINT fk_splits_user FOREIGN KEY (user_id) REFERENCES users(user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Seed data
+-- Seed data (saf start ke liye sirf 3 users, koi expense nahi)
 INSERT INTO users (name, email) VALUES
   ('Vivek', 'vivek@example.com'),
   ('Rajan', 'rajan@example.com'),
   ('Ansh', 'ansh@example.com');
-
-INSERT INTO expenses (description, total_amount, paid_by, category) VALUES
-  ('Hostel Night Biryani', 900.00, 1, 'Food'),
-  ('Auto to Station', 300.00, 2, 'Travel');
-
-INSERT INTO expense_splits (expense_id, user_id, owed_amount, is_settled) VALUES
-  (1, 1, 300.00, 1),
-  (1, 2, 300.00, 0),
-  (1, 3, 300.00, 0),
-  (2, 1, 100.00, 0),
-  (2, 2, 100.00, 1),
-  (2, 3, 100.00, 0);

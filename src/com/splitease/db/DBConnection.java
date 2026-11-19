@@ -23,8 +23,8 @@ public final class DBConnection {
         "jdbc:mysql://localhost:3306/split_tracker?useSSL=false&allowPublicKeyRetrieval=true";
     private static final String USER = "root";
 
-    /** MySQL root password - override via the DB_PASSWORD environment variable. */
-    private static final String PASSWORD = System.getenv("DB_PASSWORD");
+    /** MySQL root password - set directly here (no env var needed). */
+    private static final String PASSWORD = "root@123";
 
     static {
         try {
