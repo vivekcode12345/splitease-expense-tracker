@@ -321,13 +321,15 @@ public class MainServer {
                 html.append("              <p class=\"text-xs text-slate-500\">paid ").append(escape(money(b.getTotalPaid()))).append(" \u00b7 owes ")
                         .append(escape(money(b.getTotalOwed()))).append("</p>\n");
                 html.append("            </div>\n");
-                html.append("            <div class=\"text-right\">\n");
+                html.append("            <div class=\"text-right flex items-center gap-2\">\n");
                 if (b.getNetBalance() > 0) {
                     html.append("              <span class=\"inline-block px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-700\">+ Gets back ")
                             .append(escape(money(b.getNetBalance()))).append("</span>\n");
                 } else if (b.getNetBalance() < 0) {
                     html.append("              <span class=\"inline-block px-2.5 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700\">- Owes ")
                             .append(escape(money(-b.getNetBalance()))).append("</span>\n");
+                    html.append("              <a href=\"/settle?user_id=").append(b.getUserId()).append("\"\n");
+                    html.append("                 class=\"text-xs font-medium text-red-600 hover:text-red-800 underline hover:underline\">Settle Up</a>\n");
                 } else {
                     html.append("              <span class=\"inline-block px-2.5 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-600\">Settled</span>\n");
                 }
