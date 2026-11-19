@@ -165,6 +165,7 @@ public class MainServer {
         html.append("    .modal-overlay { display: none; position: fixed; inset: 0; z-index: 50; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(4px); }\n");
         html.append("    .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 60; width: 90%; max-width: 480px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }\n");
         html.append("    .modal.show { display: block; }\n");
+        html.append("    .modal-overlay.show { display: block; }\n");
         html.append("    .btn-primary { background: #059669; color: #ffffff; }\n");
         html.append("    .btn-primary:hover { background: #047857; }\n");
         html.append("    .avatar { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #ffffff; }\n");
@@ -445,6 +446,15 @@ public class MainServer {
         html.append("        }\n");
         html.append("      }\n");
         html.append("    });\n");
+        html.append("  </script>\n");
+        html.append("  <script>\n");
+        html.append("    function openModal(modalId) {\n");
+        html.append("      var overlay = document.getElementById(modalId);\n");
+        html.append("      overlay.classList.add('show');\n");
+        html.append("    }\n");
+        html.append("    function closeModal(modalId) {\n");
+        html.append("      document.getElementById(modalId).classList.remove('show');\n");
+        html.append("    }\n");
         html.append("  </script>\n");
         html.append("</body>\n");
         html.append("</html>\n");
