@@ -176,6 +176,7 @@ public class ExpenseDAO {
             LEFT JOIN (
                 SELECT user_id, SUM(owed_amount) AS total_owed
                 FROM expense_splits
+                WHERE is_settled = 0
                 GROUP BY user_id
             ) s ON s.user_id = u.user_id
             ORDER BY net_balance DESC
