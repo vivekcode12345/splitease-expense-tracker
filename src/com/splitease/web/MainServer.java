@@ -157,24 +157,39 @@ public class MainServer {
         html.append("  <title>SplitEase - Expense & Split-Bill Tracker</title>\n");
         html.append("  <script src=\"https://cdn.tailwindcss.com\"></script>\n");
         html.append("  <script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script>\n");
-        html.append("  <link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap\" rel=\"stylesheet\">\n");
+        html.append("  <link href=\"https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap\" rel=\"stylesheet\">\n");
         html.append("  <style>\n");
-        html.append("    body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }\n");
+        html.append("    body { font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; }\n");
+        html.append("    .font-mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }\n");
         html.append("    .badge { display: inline-flex; align-items: center; gap: 6px; }\n");
+        html.append("    .modal-overlay { display: none; position: fixed; inset: 0; z-index: 50; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(4px); }\n");
+        html.append("    .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 60; width: 90%; max-width: 480px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }\n");
+        html.append("    .modal.show { display: block; }\n");
+        html.append("    .btn-primary { background: #059669; color: #ffffff; }\n");
+        html.append("    .btn-primary:hover { background: #047857; }\n");
+        html.append("    .avatar { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #ffffff; }\n");
+        html.append("    .input-field { width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; color: #0f172a; }\n");
+        html.append("    .input-field:focus { outline: none; border-color: #059669; ring: 2px solid #059669; }\n");
+        html.append("    .table-row:hover { background: #f8fafc; }\n");
         html.append("  </style>\n");
         html.append("</head>\n");
-        html.append("<body class=\"bg-slate-50 text-slate-900\">\n");
+        html.append("<body class=\"bg-[#F8FAFC] text-slate-900 antialiased\">\n");
 
         // Navbar
         html.append("<nav class=\"bg-white border-b border-slate-200 sticky top-0 z-50\">\n");
         html.append("  <div class=\"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8\">\n");
         html.append("    <div class=\"flex justify-between h-16 items-center\">\n");
         html.append("      <div class=\"flex items-center gap-2\">\n");
-        html.append("        <div class=\"w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-lg\">S</div>\n");
+        html.append("        <div class=\"w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-lg\">S</div>\n");
         html.append("        <span class=\"font-bold text-xl tracking-tight text-slate-900\">SplitEase</span>\n");
         html.append("      </div>\n");
-        html.append("      <div class=\"flex items-center gap-4\">\n");
-        html.append("        <a href=\"/\" class=\"text-slate-600 hover:text-indigo-600 font-medium text-sm\">Dashboard</a>\n");
+        html.append("      <div class=\"flex items-center gap-3\">\n");
+        html.append("        <div class=\"flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-emerald-100 bg-emerald-50\">\n");
+        html.append("          <span class=\"w-1.5 h-1.5 rounded-full bg-emerald-500\"></span>\n");
+        html.append("          <span class=\"text-xs font-medium text-emerald-700 font-mono\">MySQL + JDBC Connected</span>\n");
+        html.append("        </div>\n");
+        html.append("        <button onclick=\"openModal('addExpenseModal')\" class=\"btn-primary px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition\">Add Expense</button>\n");
+        html.append("        <button onclick=\"openModal('addUserModal')\" class=\"border border-slate-200 bg-white px-4 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition\">Add Member</button>\n");
         html.append("      </div>\n");
         html.append("    </div>\n");
         html.append("  </div>\n");
@@ -197,86 +212,109 @@ public class MainServer {
         // Summary cards
         html.append("  <div class=\"grid grid-cols-1 md:grid-cols-3 gap-6 mb-8\">\n");
         html.append("    <div class=\"bg-white rounded-xl border border-slate-200 p-6 shadow-sm\">\n");
-        html.append("      <p class=\"text-sm font-medium text-slate-500\">Total Group Spend</p>\n");
-        html.append("      <p class=\"text-2xl font-bold text-slate-900 mt-1\">").append(escape(money(totalSpend))).append("</p>\n");
+        html.append("      <div class=\"flex items-center justify-between\">\n");
+        html.append("        <div>\n");
+        html.append("          <p class=\"text-sm font-medium text-slate-500\">Total Group Spend</p>\n");
+        html.append("          <p class=\"text-2xl font-bold font-mono text-slate-900 mt-1\">").append(escape(money(totalSpend))).append("</p>\n");
+        html.append("        </div>\n");
+        html.append("        <div class=\"w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 text-lg font-bold\">₹</div>\n");
+        html.append("      </div>\n");
         html.append("    </div>\n");
         html.append("    <div class=\"bg-white rounded-xl border border-slate-200 p-6 shadow-sm\">\n");
-        html.append("      <p class=\"text-sm font-medium text-slate-500\">Total Members</p>\n");
-        html.append("      <p class=\"text-2xl font-bold text-slate-900 mt-1\">").append(users.size()).append("</p>\n");
+        html.append("      <div class=\"flex items-center justify-between\">\n");
+        html.append("        <div>\n");
+        html.append("          <p class=\"text-sm font-medium text-slate-500\">Total Members</p>\n");
+        html.append("          <p class=\"text-2xl font-bold font-mono text-slate-900 mt-1\">").append(users.size()).append("</p>\n");
+        html.append("        </div>\n");
+        html.append("        <div class=\"w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 text-lg font-bold\">👥</div>\n");
+        html.append("      </div>\n");
         html.append("    </div>\n");
         html.append("    <div class=\"bg-white rounded-xl border border-slate-200 p-6 shadow-sm\">\n");
-        html.append("      <p class=\"text-sm font-medium text-slate-500\">Pending Settlements</p>\n");
+        html.append("      <div class=\"flex items-center justify-between\">\n");
         html.append("      <p class=\"text-2xl font-bold ").append(pendingCount == 0 ? "text-emerald-600" : "text-amber-600").append(" mt-1\">")
                 .append(pendingCount).append(" split(s)</p>\n");
+        html.append("      </div>\n");
         html.append("    </div>\n");
         html.append("  </div>\n");
-        // Action row: Add Expense + Add User forms
-        html.append("  <div class=\"grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8\">\n");
-
-        // ---- Add Expense form ----
-        html.append("    <div class=\"lg:col-span-8 bg-white rounded-xl border border-slate-200 p-6 shadow-sm\">\n");
-        html.append("      <h2 class=\"text-lg font-bold text-slate-900 mb-6\">Add Expense</h2>\n");
-        html.append("      <form action=\"/add-expense\" method=\"post\" class=\"grid grid-cols-1 md:grid-cols-3 gap-4\">\n");
-        html.append("        <div class=\"md:col-span-2\">\n");
-        html.append("          <label class=\"block text-sm font-medium text-slate-700 mb-1\">Description</label>\n");
-        html.append("          <input type=\"text\" name=\"description\" required\n");
-        html.append("            class=\"w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none\">\n");
-        html.append("        </div>\n");
-        html.append("        <div>\n");
-        html.append("          <label class=\"block text-sm font-medium text-slate-700 mb-1\">Total Amount (₹)</label>\n");
-        html.append("          <input type=\"number\" name=\"total_amount\" step=\"0.01\" min=\"0\" required\n");
-        html.append("            class=\"w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none\">\n");
-        html.append("        </div>\n");
-        html.append("        <div>\n");
-        html.append("          <label class=\"block text-sm font-medium text-slate-700 mb-1\">Paid By</label>\n");
-        html.append("          <select name=\"paid_by\" class=\"w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none\">\n");
+        // Modals (triggered by navbar buttons)
+        // ---- Add Expense Modal ----
+        html.append("    <div id=\"addExpenseModal\" class=\"modal-overlay\" onclick=\"closeModal('addExpenseModal')\">\n");
+        html.append("      <div class=\"modal\" onclick=\"event.stopPropagation()\">\n");
+        html.append("        <div class=\"p-6\">\n");
+        html.append("          <h3 class=\"text-lg font-bold text-slate-900 mb-4\">Add Expense</h3>\n");
+        html.append("          <form action=\"/add-expense\" method=\"post\" class=\"space-y-4\">\n");
+        html.append("            <div>\n");
+        html.append("              <label class=\"block text-sm font-medium text-slate-700 mb-1\">Description</label>\n");
+        html.append("              <input type=\"text\" name=\"description\" required class=\"input-field\">\n");
+        html.append("            </div>\n");
+        html.append("            <div>\n");
+        html.append("              <label class=\"block text-sm font-medium text-slate-700 mb-1\">Total Amount (₹)</label>\n");
+        html.append("              <input type=\"number\" name=\"total_amount\" step=\"0.01\" min=\"0\" required class=\"input-field\">\n");
+        html.append("            </div>\n");
+        html.append("            <div>\n");
+        html.append("              <label class=\"block text-sm font-medium text-slate-700 mb-1\">Paid By</label>\n");
+        html.append("              <select name=\"paid_by\" class=\"input-field\">\n");
         for (User u : users) {
-            html.append("            <option value=\"").append(u.getUserId()).append("\">").append(escape(u.getName())).append("</option>\n");
+            html.append("                <option value=\"").append(u.getUserId()).append("\">").append(escape(u.getName())).append("</option>\n");
         }
-        html.append("          </select>\n");
-        html.append("        </div>\n");
-        html.append("        <div>\n");
-        html.append("          <label class=\"block text-sm font-medium text-slate-700 mb-1\">Category</label>\n");
-        html.append("          <select name=\"category\" class=\"w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none\">\n");
+        html.append("              </select>\n");
+        html.append("            </div>\n");
+        html.append("            <div>\n");
+        html.append("              <label class=\"block text-sm font-medium text-slate-700 mb-1\">Category</label>\n");
+        html.append("              <select name=\"category\" class=\"input-field\">\n");
         String[] defaultCategories = {"Food", "Travel", "Shopping", "Utilities", "Entertainment", "Other"};
         for (String c : defaultCategories) {
-            html.append("            <option value=\"").append(c).append("\">").append(c).append("</option>\n");
+            html.append("                <option value=\"").append(c).append("\">").append(c).append("</option>\n");
         }
-        html.append("          </select>\n");
+        html.append("              </select>\n");
+        html.append("            </div>\n");
+        html.append("            <div class=\"flex justify-end gap-3 pt-4\">\n");
+        html.append("              <button type=\"button\" onclick=\"closeModal('addExpenseModal')\" class=\"px-4 py-2 rounded-lg border border-slate-200 text-slate-700 font-medium hover:bg-slate-50\">Cancel</button>\n");
+        html.append("              <button type=\"submit\" class=\"btn-primary px-4 py-2 rounded-lg text-sm font-medium\">Add Expense</button>\n");
+        html.append("            </div>\n");
+        html.append("            <p class=\"mt-3 text-xs text-slate-500\">Splits the amount equally among all members automatically.</p>\n");
+        html.append("          </form>\n");
         html.append("        </div>\n");
-        html.append("        <div class=\"md:col-span-3 flex items-end\">\n");
-        html.append("          <button type=\"submit\" class=\"w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition\">Add Expense</button>\n");
-        html.append("        </div>\n");
-        html.append("      </form>\n");
-        html.append("      <p class=\"mt-4 text-sm text-slate-500\">Splits the amount equally among all members automatically.</p>\n");
+        html.append("        <button onclick=\"closeModal('addExpenseModal')\" class=\"absolute right-3 top-3 text-slate-400 hover:text-slate-600\">&times;</button>\n");
+        html.append("      </div>\n");
         html.append("    </div>\n");
 
-        // ---- Add User form ----
-        html.append("    <div class=\"lg:col-span-4 bg-white rounded-xl border border-slate-200 p-6 shadow-sm\">\n");
-        html.append("      <h2 class=\"text-lg font-bold text-slate-900 mb-6\">Add Member</h2>\n");
-        html.append("      <form action=\"/add-user\" method=\"post\" class=\"space-y-4\">\n");
-        html.append("        <div>\n");
-        html.append("          <label class=\"block text-sm font-medium text-slate-700 mb-1\">Name</label>\n");
-        html.append("          <input type=\"text\" name=\"name\" required\n");
-        html.append("            class=\"w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none\">\n");
+        // ---- Add User Modal ----
+        html.append("    <div id=\"addUserModal\" class=\"modal-overlay\" onclick=\"closeModal('addUserModal')\">\n");
+        html.append("      <div class=\"modal\" onclick=\"event.stopPropagation()\">\n");
+        html.append("        <div class=\"p-6\">\n");
+        html.append("          <h3 class=\"text-lg font-bold text-slate-900 mb-4\">Add Member</h3>\n");
+        html.append("          <form action=\"/add-user\" method=\"post\" class=\"space-y-4\">\n");
+        html.append("            <div>\n");
+        html.append("              <label class=\"block text-sm font-medium text-slate-700 mb-1\">Name</label>\n");
+        html.append("              <input type=\"text\" name=\"name\" required class=\"input-field\">\n");
+        html.append("            </div>\n");
+        html.append("            <div>\n");
+        html.append("              <label class=\"block text-sm font-medium text-slate-700 mb-1\">Email</label>\n");
+        html.append("              <input type=\"email\" name=\"email\" required class=\"input-field\">\n");
+        html.append("            </div>\n");
+        html.append("            <div class=\"flex justify-end pt-4\">\n");
+        html.append("              <button type=\"button\" onclick=\"closeModal('addUserModal')\" class=\"px-4 py-2 rounded-lg border border-slate-200 text-slate-700 font-medium hover:bg-slate-50\">Cancel</button>\n");
+        html.append("              <button type=\"submit\" class=\"btn-primary px-4 py-2 rounded-lg text-sm font-medium\">Add Member</button>\n");
+        html.append("            </div>\n");
+        html.append("          </form>\n");
         html.append("        </div>\n");
-        html.append("        <div>\n");
-        html.append("          <label class=\"block text-sm font-medium text-slate-700 mb-1\">Email</label>\n");
-        html.append("          <input type=\"email\" name=\"email\" required\n");
-        html.append("            class=\"w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none\">\n");
-        html.append("        </div>\n");
-        html.append("        <button type=\"submit\" class=\"w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg transition\">Add Member</button>\n");
-        html.append("      </form>\n");
+        html.append("        <button onclick=\"closeModal('addUserModal')\" class=\"absolute right-3 top-3 text-slate-400 hover:text-slate-600\">&times;</button>\n");
+        html.append("      </div>\n");
         html.append("    </div>\n");
-        html.append("  </div>\n");
         // Bottom row: Recent Expenses + Member Balances + Category Chart
         html.append("  <div class=\"grid grid-cols-1 lg:grid-cols-12 gap-6\">\n");
 
-        // ---- Recent Expenses table ----
         html.append("    <div class=\"lg:col-span-8 bg-white rounded-xl border border-slate-200 p-6 shadow-sm\">\n");
-        html.append("      <h2 class=\"text-lg font-bold text-slate-900 mb-4\">Recent Expenses</h2>\n");
+        html.append("      <div class=\"flex items-center justify-between mb-4\">\n");
+        html.append("        <h2 class=\"text-lg font-bold text-slate-900\">Recent Expenses</h2>\n");
+        html.append("        <div class=\"relative\">\n");
+        html.append("          <input type=\"text\" id=\"expenseSearch\" placeholder=\"Search expenses…\" class=\"input-field pl-9 pr-4 py-2 max-w-xs\">\n");
+        html.append("          <svg class=\"w-4 h-4 text-slate-400 absolute left-3 top-2.5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z\"></path></svg>\n");
+        html.append("        </div>\n");
+        html.append("      </div>\n");
         html.append("      <div class=\"overflow-x-auto\">\n");
-        html.append("        <table class=\"w-full text-left border-collapse\">\n");
+        html.append("        <table class=\"w-full text-left border-collapse\" id=\"expenseTable\">\n");
         html.append("          <thead>\n");
         html.append("            <tr class=\"border-b border-slate-200\">\n");
         html.append("              <th class=\"pb-3 text-sm font-medium text-slate-500\">Description</th>\n");
@@ -291,13 +329,16 @@ public class MainServer {
             html.append("            <tr><td colspan=\"5\" class=\"py-4 text-center text-slate-500\">No expenses yet.</td></tr>\n");
         }
         for (Expense e : expenses) {
-            html.append("            <tr class=\"border-b border-slate-100 hover:bg-slate-50 transition\">\n");
-            html.append("              <td class=\"py-3 text-slate-900 font-medium\">").append(escape(e.getDescription())).append("</td>\n");
-            html.append("              <td class=\"py-3 text-slate-600 text-sm\">").append(escape(e.getPayerName())).append("</td>\n");
-            html.append("              <td class=\"py-3\"><span class=\"inline-block px-2 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700\">")
-                    .append(escape(e.getCategory())).append("</span></td>\n");
-            html.append("              <td class=\"py-3 text-right text-slate-900 font-medium\">").append(escape(money(e.getTotalAmount()))).append("</td>\n");
-            html.append("              <td class=\"py-3 text-slate-500 text-sm\">").append(escape(e.getCreatedAt() != null ? e.getCreatedAt().toString() : "-")).append("</td>\n");
+            String payerInitial = e.getPayerName().substring(0, 1).toUpperCase();
+            int payerHash = payerInitial.hashCode() & 0x7FFFFFFF;
+            String payerColor = String.format("#%06X", payerHash % 0x1000000);
+            if (payerColor.equals("#000000")) payerColor = "#059669";
+            html.append("            <tr class=\"table-row border-b border-slate-100 hover:bg-slate-50 transition\">\n");
+            html.append("              <td class=\"py-4 text-slate-900 font-medium\">").append(escape(e.getDescription())).append("</td>\n");
+            html.append("              <td class=\"py-4 text-sm\"><span class=\"avatar\" style=\"background:").append(payerColor).append(";\">").append(escape(payerInitial)).append("</span> <span class=\"text-slate-600 ml-2\">").append(escape(e.getPayerName())).append("</span></td>\n");
+            html.append("              <td class=\"py-4\"><span class=\"inline-block px-2 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700\">").append(escape(e.getCategory())).append("</span></td>\n");
+            html.append("              <td class=\"py-4 text-right text-slate-900 font-medium font-mono\">").append(escape(money(e.getTotalAmount()))).append("</td>\n");
+            html.append("              <td class=\"py-4 text-slate-500 text-sm\">").append(escape(e.getCreatedAt() != null ? e.getCreatedAt().toString() : "-")).append("</td>\n");
             html.append("            </tr>\n");
         }
         html.append("          </tbody>\n");
@@ -315,19 +356,23 @@ public class MainServer {
         } else {
             html.append("        <div class=\"space-y-3\">\n");
             for (UserBalance b : balances) {
+                String initial = b.getName().substring(0, 1).toUpperCase();
+                int h = initial.hashCode() & 0x7FFFFFFF;
+                String color = String.format("#%06X", h % 0x1000000);
+                if (color.equals("#000000")) color = "#059669";
                 html.append("          <div class=\"flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white\">\n");
-                html.append("            <div>\n");
-                html.append("              <span class=\"font-medium text-slate-900\">").append(escape(b.getName())).append("</span>\n");
-                html.append("              <p class=\"text-xs text-slate-500\">paid ").append(escape(money(b.getTotalPaid()))).append(" \u00b7 owes ")
-                        .append(escape(money(b.getTotalOwed()))).append("</p>\n");
+                html.append("            <div class=\"flex items-center gap-3\">\n");
+                html.append("              <span class=\"avatar\" style=\"background:").append(color).append(";\">").append(escape(initial)).append("</span>\n");
+                html.append("              <div>\n");
+                html.append("                <span class=\"font-medium text-slate-900\">").append(escape(b.getName())).append("</span>\n");
+                html.append("                <p class=\"text-xs text-slate-500\">paid ").append(escape(money(b.getTotalPaid()))).append(" \u00b7 owes ").append(escape(money(b.getTotalOwed()))).append("</p>\n");
+                html.append("              </div>\n");
                 html.append("            </div>\n");
                 html.append("            <div class=\"text-right flex items-center gap-2\">\n");
                 if (b.getNetBalance() > 0) {
-                    html.append("              <span class=\"inline-block px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-700\">+ Gets back ")
-                            .append(escape(money(b.getNetBalance()))).append("</span>\n");
+                    html.append("              <span class=\"inline-block px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-700\">+ Gets back ").append(escape(money(b.getNetBalance()))).append("</span>\n");
                 } else if (b.getNetBalance() < 0) {
-                    html.append("              <span class=\"inline-block px-2.5 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700\">- Owes ")
-                            .append(escape(money(-b.getNetBalance()))).append("</span>\n");
+                    html.append("              <span class=\"inline-block px-2.5 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700\">- Owes ").append(escape(money(-b.getNetBalance()))).append("</span>\n");
                     html.append("              <a href=\"/settle?user_id=").append(b.getUserId()).append("\"\n");
                     html.append("                 class=\"text-xs font-medium text-red-600 hover:text-red-800 underline hover:underline\">Settle Up</a>\n");
                 } else {
