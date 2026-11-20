@@ -26,7 +26,7 @@ CREATE TABLE expenses (
   category VARCHAR(50) NOT NULL,
   created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (expense_id),
-  CONSTRAINT fk_expenses_paid_by FOREIGN KEY (paid_by) REFERENCES users(user_id)
+  CONSTRAINT fk_expenses_paid_by FOREIGN KEY (paid_by) REFERENCES users(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE expense_splits (
@@ -37,10 +37,10 @@ CREATE TABLE expense_splits (
   is_settled TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (split_id),
   CONSTRAINT fk_splits_expense FOREIGN KEY (expense_id) REFERENCES expenses(expense_id) ON DELETE CASCADE,
-  CONSTRAINT fk_splits_user FOREIGN KEY (user_id) REFERENCES users(user_id)
+  CONSTRAINT fk_splits_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Seed data (saf start ke liye sirf 3 users, koi expense nahi)
+-- Seed data (sirf 3 users, koi expense nahi)
 INSERT INTO users (name, email) VALUES
   ('Vivek', 'vivek@example.com'),
   ('Rajan', 'rajan@example.com'),

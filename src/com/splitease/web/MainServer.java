@@ -47,6 +47,7 @@ public class MainServer {
         server.createContext("/add-user", new AddUserHandler());
         server.createContext("/add-expense", new AddExpenseHandler());
         server.createContext("/settle", new SettleHandler());
+        server.createContext("/delete-member", new DeleteMemberHandler());
 
         server.start();
         System.out.println("SplitEase server running on http://localhost:" + PORT);
@@ -122,6 +123,7 @@ public class MainServer {
                             case "error=add_user_failed"    -> error = "Failed to add member.";
                             case "error=add_expense_failed" -> error = "Failed to add expense.";
                             case "error=settle_failed"      -> error = "Failed to settle balance.";
+                            case "error=delete_member_failed" -> error = "Failed to delete member.";
                         }
                     }
                 }
@@ -173,6 +175,11 @@ public class MainServer {
         html.append("    .input-field { width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; color: #0f172a; }\n");
         html.append("    .input-field:focus { outline: none; border-color: #059669; ring: 2px solid #059669; }\n");
         html.append("    .table-row:hover { background: #f8fafc; }\n");
+        html.append("    .balance-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }\n");
+        html.append("    .settle-button { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 6px 10px; border-radius: 8px; background: #fff7ed; border: 1px solid #fdba74; color: #c2410c; font-size: 12px; font-weight: 700; text-decoration: none; transition: all 150ms ease; }\n");
+        html.append("    .settle-button:hover { background: #ffedd5; border-color: #fb923c; }\n");
+        html.append("    .delete-button { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 6px 10px; border-radius: 8px; background: #ffffff; border: 1px solid #fecaca; color: #dc2626; font-size: 12px; font-weight: 700; transition: all 150ms ease; }\n");
+        html.append("    .delete-button:hover { background: #fef2f2; border-color: #f87171; }\n");
         html.append("  </style>\n");
         html.append("</head>\n");
         html.append("<body class=\"bg-[#F8FAFC] text-slate-900 antialiased\">\n");
@@ -370,16 +377,24 @@ public class MainServer {
                 html.append("                <p class=\"text-xs text-slate-500\">paid ").append(escape(money(b.getTotalPaid()))).append(" \u00b7 owes ").append(escape(money(b.getTotalOwed()))).append("</p>\n");
                 html.append("              </div>\n");
                 html.append("            </div>\n");
-                html.append("            <div class=\"text-right flex items-center gap-2\">\n");
+                html.append("            <div class=\"text-right\">\n");
+                html.append("              <div class=\"balance-actions\">\n");
                 if (b.getNetBalance() > 0) {
                     html.append("              <span class=\"inline-block px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-700\">+ Gets back ").append(escape(money(b.getNetBalance()))).append("</span>\n");
                 } else if (b.getNetBalance() < 0) {
                     html.append("              <span class=\"inline-block px-2.5 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700\">- Owes ").append(escape(money(-b.getNetBalance()))).append("</span>\n");
                     html.append("              <a href=\"/settle?user_id=").append(b.getUserId()).append("\"\n");
-                    html.append("                 class=\"text-xs font-medium text-red-600 hover:text-red-800 underline hover:underline\">Settle Up</a>\n");
+                    html.append("                 class=\"settle-button\">Settle Up</a>\n");
                 } else {
                     html.append("              <span class=\"inline-block px-2.5 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-600\">Settled</span>\n");
                 }
+                html.append("              <form action=\"/delete-member\" method=\"post\" onsubmit=\"return confirm('Delete ")
+                        .append(escape(b.getName()))
+                        .append("? Their expenses and splits will be removed and all remaining expenses will be re-split.')\">\n");
+                html.append("                <input type=\"hidden\" name=\"user_id\" value=\"").append(b.getUserId()).append("\">\n");
+                html.append("                <button type=\"submit\" class=\"delete-button\">Delete</button>\n");
+                html.append("              </form>\n");
+                html.append("              </div>\n");
                 html.append("            </div>\n");
                 html.append("          </div>\n");
             }
@@ -531,6 +546,25 @@ public class MainServer {
             } catch (SQLException | NumberFormatException e) {
                 e.printStackTrace();
                 sendRedirect(exchange, "/?error=settle_failed");
+            }
+        }
+    }
+
+    static final class DeleteMemberHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+                sendRedirect(exchange, "/");
+                return;
+            }
+            try {
+                Map<String, String> form = parseForm(exchange.getRequestBody());
+                int userId = Integer.parseInt(form.get("user_id"));
+                dao.deleteUser(userId);
+                sendRedirect(exchange, "/");
+            } catch (SQLException | NumberFormatException e) {
+                e.printStackTrace();
+                sendRedirect(exchange, "/?error=delete_member_failed");
             }
         }
     }

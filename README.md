@@ -41,6 +41,8 @@ No Spring Boot, Maven, external application server, or ORM is required.
 ## Features
 
 - Add and manage group members
+- The seed database starts with Vivek and Rajan
+- Delete a member with automatic expense and split recalculation
 - Record expenses by payer and category
 - Split an expense equally across all current members
 - View live total spend and pending settlements
@@ -201,6 +203,7 @@ export DB_PASSWORD=''
 | `POST` | `/add-user` | Add a member |
 | `POST` | `/add-expense` | Create an expense and equal splits |
 | `GET` | `/settle?user_id=<id>` | Mark a member's pending splits as settled |
+| `POST` | `/delete-member` | Delete a member and re-split remaining expenses |
 
 ---
 

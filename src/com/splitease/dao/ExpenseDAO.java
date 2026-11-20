@@ -57,6 +57,91 @@ public class ExpenseDAO {
         }
     }
 
+    /**
+     * Deletes a member and recalculates all remaining expenses.
+     *
+     * Expenses paid by the deleted member are removed. Every remaining expense
+     * is re-split equally among all remaining users inside one transaction.
+     */
+    public void deleteUser(int userId) throws SQLException {
+        String deleteUserSplits = "DELETE FROM expense_splits WHERE user_id = ?";
+        String deleteUserExpenses = "DELETE FROM expenses WHERE paid_by = ?";
+        String selectRemainingUsers = "SELECT user_id FROM users WHERE user_id <> ?";
+        String selectRemainingExpenses =
+            "SELECT expense_id, total_amount FROM expenses";
+        String deleteExpenseSplits = "DELETE FROM expense_splits WHERE expense_id = ?";
+        String insertSplit =
+            "INSERT INTO expense_splits (expense_id, user_id, owed_amount, is_settled) VALUES (?, ?, ?, 0)";
+        String deleteUser = "DELETE FROM users WHERE user_id = ?";
+
+        try (Connection conn = DBConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(deleteUserSplits)) {
+                    ps.setInt(1, userId);
+                    ps.executeUpdate();
+                }
+                try (PreparedStatement ps = conn.prepareStatement(deleteUserExpenses)) {
+                    ps.setInt(1, userId);
+                    ps.executeUpdate();
+                }
+
+                List<Integer> remainingUserIds = new ArrayList<>();
+                try (PreparedStatement ps = conn.prepareStatement(selectRemainingUsers)) {
+                    ps.setInt(1, userId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            remainingUserIds.add(rs.getInt("user_id"));
+                        }
+                    }
+                }
+                if (remainingUserIds.isEmpty()) {
+                    throw new SQLException("At least one member must remain in the group.");
+                }
+
+                try (PreparedStatement selectExpenses = conn.prepareStatement(selectRemainingExpenses);
+                     ResultSet expenses = selectExpenses.executeQuery();
+                     PreparedStatement deleteSplits = conn.prepareStatement(deleteExpenseSplits);
+                     PreparedStatement insert = conn.prepareStatement(insertSplit)) {
+                    while (expenses.next()) {
+                        int expenseId = expenses.getInt("expense_id");
+                        double totalAmount = expenses.getDouble("total_amount");
+                        double share = totalAmount / remainingUserIds.size();
+                        BigDecimal shareAmount =
+                            BigDecimal.valueOf(share).setScale(2, RoundingMode.HALF_UP);
+
+                        deleteSplits.setInt(1, expenseId);
+                        deleteSplits.executeUpdate();
+
+                        for (int remainingUserId : remainingUserIds) {
+                            insert.setInt(1, expenseId);
+                            insert.setInt(2, remainingUserId);
+                            insert.setBigDecimal(3, shareAmount);
+                            insert.addBatch();
+                        }
+                        insert.executeBatch();
+                        insert.clearBatch();
+                    }
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement(deleteUser)) {
+                    ps.setInt(1, userId);
+                    if (ps.executeUpdate() != 1) {
+                        throw new SQLException("Member could not be found.");
+                    }
+                }
+                conn.commit();
+            } catch (Exception e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackEx) {
+                    e.addSuppressed(rollbackEx);
+                }
+                throw e;
+            }
+        }
+    }
+
     /* --------------------- Expenses & Splits --------------------- */
 
     /**
