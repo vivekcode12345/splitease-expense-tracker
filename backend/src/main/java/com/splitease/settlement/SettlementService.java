@@ -11,6 +11,8 @@ import com.splitease.settlement.dto.BalanceResponse;
 import com.splitease.settlement.dto.BalancesResponse;
 import com.splitease.settlement.dto.CategorySummaryResponse;
 import com.splitease.settlement.dto.CreateSettlementRequest;
+import com.splitease.settlement.dto.DebtSimplificationResult;
+import com.splitease.settlement.dto.MemberBalanceDto;
 import com.splitease.settlement.dto.SettlementResponse;
 import com.splitease.user.User;
 import com.splitease.user.UserRepository;
@@ -34,6 +36,7 @@ public class SettlementService {
     private final ExpenseGroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final UserRepository userRepository;
+    private final DebtSimplificationService debtSimplificationService;
 
     @Transactional
     public SettlementResponse createSettlement(Long groupId, Long currentUserId,
@@ -152,6 +155,73 @@ public class SettlementService {
                 .members(balanceResponses)
                 .categorySummary(categorySummary)
                 .build();
+    }
+
+    /**
+     * Fetches each group member's net balance as a {@link MemberBalanceDto} list,
+     * suitable for debt simplification. Does NOT perform auth checks (caller is
+     * responsible for authorization).
+     */
+    public List<MemberBalanceDto> getMemberBalances(Long groupId) {
+        List<GroupMember> members = groupMemberRepository.findByGroupId(groupId);
+        if (members.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, BigDecimal> totalPaid = new HashMap<>();
+        for (Object[] row : expenseRepository.totalPaidByMember(groupId)) {
+            totalPaid.put(((Number) row[0]).longValue(), (BigDecimal) row[1]);
+        }
+
+        Map<Long, BigDecimal> totalOwed = new HashMap<>();
+        for (Object[] row : expenseSplitRepository.totalOwedByMember(groupId)) {
+            totalOwed.put(((Number) row[0]).longValue(), (BigDecimal) row[1]);
+        }
+
+        Map<Long, BigDecimal> settlementsPaid = new HashMap<>();
+        for (Object[] row : settlementRepository.totalPaidByMember(groupId)) {
+            settlementsPaid.put(((Number) row[0]).longValue(), (BigDecimal) row[1]);
+        }
+
+        Map<Long, BigDecimal> settlementsReceived = new HashMap<>();
+        for (Object[] row : settlementRepository.totalReceivedByMember(groupId)) {
+            settlementsReceived.put(((Number) row[0]).longValue(), (BigDecimal) row[1]);
+        }
+
+        BigDecimal ZERO = BigDecimal.ZERO;
+
+        List<MemberBalanceDto> dtos = new ArrayList<>();
+        for (GroupMember member : members) {
+            Long uid = member.getUserId();
+            User user = userRepository.getReferenceById(uid);
+
+            BigDecimal paid = totalPaid.getOrDefault(uid, ZERO);
+            BigDecimal owed = totalOwed.getOrDefault(uid, ZERO);
+            BigDecimal settledPaid = settlementsPaid.getOrDefault(uid, ZERO);
+            BigDecimal settledReceived = settlementsReceived.getOrDefault(uid, ZERO);
+
+            BigDecimal netBalance = paid.add(settledPaid)
+                    .subtract(owed.add(settledReceived));
+
+            dtos.add(MemberBalanceDto.builder()
+                    .userId(uid)
+                    .name(user.getName())
+                    .netBalance(netBalance)
+                    .build());
+        }
+        return dtos;
+    }
+
+    /**
+     * Runs the min-cash-flow debt simplification engine for a group.
+     */
+    public DebtSimplificationResult simplifyGroupDebts(Long groupId) {
+        List<MemberBalanceDto> balances = getMemberBalances(groupId);
+        return debtSimplificationService.simplifyDebts(balances);
+    }
+
+    public boolean isMember(Long groupId, Long userId) {
+        return groupMemberRepository.existsByGroupIdAndUserId(groupId, userId);
     }
 
     /* ------------------------- Response mapping ------------------------- */
