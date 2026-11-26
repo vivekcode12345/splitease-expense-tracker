@@ -19,6 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/groups")
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class GroupController {
 
     private final ExpenseGroupRepository groupRepository;
@@ -99,7 +100,7 @@ public class GroupController {
         List<GroupResponse> responses = groups.stream()
                 .map(group -> {
                     GroupMember member = memberRepository.findByGroupIdAndUserId(group.getId(), currentUser.getId())
-                            .orElseThrow();
+                            .orElseThrow(() -> new IllegalStateException("GroupMember not found"));
                     long memberCount = memberRepository.countByGroupId(group.getId());
                     return GroupResponse.summary(group, member.getRole(), (int) memberCount);
                 })

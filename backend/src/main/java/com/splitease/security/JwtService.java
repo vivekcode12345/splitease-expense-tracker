@@ -16,6 +16,7 @@ import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class JwtService {
 
     @Value("${app.jwt.secret}")

@@ -13,7 +13,6 @@ import com.splitease.group.GroupMemberRepository;
 import com.splitease.user.User;
 import com.splitease.user.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,16 +20,14 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@SuppressWarnings("null")
 public class ExpenseService {
 
     private final ExpenseRepository expenseRepository;
-    private final ExpenseSplitRepository expenseSplitRepository;
     private final ExpenseGroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final UserRepository userRepository;

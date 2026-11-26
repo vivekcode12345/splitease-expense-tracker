@@ -11,10 +11,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("null")
 class DebtSimplificationServiceTest {
 
     private final DebtSimplificationService service = new DebtSimplificationService();
-
     private MemberBalanceDto b(Long id, String name, BigDecimal net) {
         return MemberBalanceDto.builder().userId(id).name(name).netBalance(net).build();
     }
